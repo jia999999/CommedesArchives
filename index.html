@@ -115,7 +115,7 @@
 </head>
 <body>
     <nav class="nav" id="nav">
-        <a href="catalogue.html">Tous les produits</a>
+        <a href="catalogue-api.html">Tous les produits</a>
     </nav>
 
     <div class="logo-container">
@@ -147,7 +147,7 @@
             
             gammes.forEach(gamme => {
                 const link = document.createElement('a');
-                link.href = `catalogue.html?gamme=${encodeURIComponent(gamme)}`;
+                link.href = `catalogue-api.html?gamme=${encodeURIComponent(gamme)}`;
                 link.textContent = gamme;
                 nav.appendChild(link);
             });
@@ -199,7 +199,7 @@
                 
                 div.appendChild(img);
                 div.onclick = () => {
-                    window.location.href = `catalogue.html?id=${product.id}`;
+                    window.location.href = `catalogue-api.html?id=${product.id}`;
                 };
                 
                 container.appendChild(div);
