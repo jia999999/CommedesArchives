@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogue</title>
+    <title>Catalogue Comme des Garçons</title>
     <style>
         * {
             margin: 0;
@@ -120,6 +120,7 @@
             padding: 8px 15px;
             background: #f0f0f0;
             border-radius: 15px;
+            max-width: 300px;
         }
 
         .status.success {
@@ -383,7 +384,7 @@
         </div>
         <div class="product-grid" id="productGrid"></div>
         <div class="no-products" id="noProducts" style="display: none;">
-            Aucun produit trouvé. Cliquez sur "Sync AppSheet" ou importez vos données manuellement.
+            Aucun produit trouvé. Cliquez sur "Sync AppSheet" pour charger vos données.
         </div>
     </div>
 
@@ -400,35 +401,36 @@
         // ===== CONFIGURATION APPSHEET =====
         const APPSHEET_CONFIG = {
             APP_ID: "b3c294e1-c530-4166-baea-cb6da2b1fff5",
-            TABLE_NAME: "uVJRCAh-a94qyCAi4jEDT9",
+            TABLE_NAME: "BD Comme des Garçons",
             ACCESS_KEY: "V2-24Cwk-OPyi3-BTjrR-S9t45-SlenX-OKflA-ruzEK-IXwJ4"
         };
 
         let products = [];
         let filteredProducts = [];
 
-        // Fonction pour synchroniser avec AppSheet
+        // ===== SYNCHRONISATION APPSHEET OPTIMISÉE =====
         async function syncFromAppSheet() {
-            if (!APPSHEET_CONFIG.ACCESS_KEY) {
-                showStatus('⚠️ Configurez d\'abord votre ACCESS_KEY dans le code', 'error');
-                return;
-            }
-
             const btn = document.getElementById('syncBtn');
             btn.disabled = true;
-            showStatus('🔄 Synchronisation en cours...', '');
+            showStatus('🔄 Connexion à AppSheet...', '');
             showLoading(true);
 
-            const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_CONFIG.APP_ID}/tables/${APPSHEET_CONFIG.TABLE_NAME}/Action`;
+            // URL de l'API AppSheet
+            const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_CONFIG.APP_ID}/tables/${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}/Action`;
             
+            // Configuration de la requête optimisée
             const requestBody = {
                 "Action": "Find",
                 "Properties": {
                     "Locale": "fr-FR",
-                    "Selector": `Filter(${APPSHEET_CONFIG.TABLE_NAME}, true)`,
                     "Timezone": "Europe/Paris"
-                }
+                },
+                "Rows": [] // Récupère toutes les lignes
             };
+
+            console.log('🚀 Démarrage synchronisation...');
+            console.log('📍 URL:', url);
+            console.log('📦 Body:', JSON.stringify(requestBody, null, 2));
 
             try {
                 const response = await fetch(url, {
@@ -440,30 +442,70 @@
                     body: JSON.stringify(requestBody)
                 });
 
+                console.log('📡 Status:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    throw new Error(`Erreur API: ${response.status} - ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error('❌ Erreur serveur:', errorText);
+                    
+                    let errorMessage = `Erreur ${response.status}`;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.Message || errorJson.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
-                
-                if (data.Rows && data.Rows.length > 0) {
-                    products = data.Rows;
+                console.log('✅ Données reçues:', data);
+
+                // Gestion flexible de la structure de réponse
+                let rows = [];
+                if (Array.isArray(data)) {
+                    rows = data;
+                } else if (data.Rows && Array.isArray(data.Rows)) {
+                    rows = data.Rows;
+                } else if (data.rows && Array.isArray(data.rows)) {
+                    rows = data.rows;
+                } else if (data.value && Array.isArray(data.value)) {
+                    rows = data.value;
+                }
+
+                console.log(`📊 ${rows.length} produits trouvés`);
+
+                if (rows.length > 0) {
+                    products = rows;
+                    filteredProducts = [...products];
                     await saveToStorage();
                     displayProducts();
                     populateFilters();
-                    showStatus(`✅ ${products.length} produits synchronisés`, 'success');
+                    showStatus(`✅ ${products.length} produits synchronisés !`, 'success');
+                    console.log('💾 Données sauvegardées');
                 } else {
-                    showStatus('⚠️ Aucune donnée trouvée', 'error');
+                    showStatus('⚠️ Aucun produit trouvé dans la base', 'error');
+                    console.warn('⚠️ Structure de réponse:', data);
                 }
+
             } catch (error) {
-                console.error('Erreur de synchronisation:', error);
-                showStatus(`❌ Erreur: ${error.message}`, 'error');
+                console.error('❌ Erreur complète:', error);
+                showStatus(`❌ ${error.message}`, 'error');
+                
+                // Afficher les détails dans la console
+                console.group('🔍 Diagnostic');
+                console.log('App ID:', APPSHEET_CONFIG.APP_ID);
+                console.log('Table:', APPSHEET_CONFIG.TABLE_NAME);
+                console.log('Access Key:', APPSHEET_CONFIG.ACCESS_KEY ? '✓ Définie' : '✗ Manquante');
+                console.groupEnd();
             } finally {
                 btn.disabled = false;
                 showLoading(false);
             }
         }
 
+        // ===== GESTION DU STATUT =====
         function showStatus(message, type = '') {
             const status = document.getElementById('status');
             status.textContent = message;
@@ -482,20 +524,24 @@
             document.getElementById('productGrid').style.display = show ? 'none' : 'grid';
         }
 
+        // ===== STOCKAGE PERSISTANT =====
         async function loadFromStorage() {
             try {
                 const result = await window.storage.get('appsheet-products');
                 if (result && result.value) {
                     products = JSON.parse(result.value);
+                    filteredProducts = [...products];
                     applyURLFilters();
                     displayProducts();
                     populateFilters();
-                    showStatus(`📦 ${products.length} produits chargés depuis la mémoire`, 'success');
+                    showStatus(`📦 ${products.length} produits chargés`, 'success');
+                    console.log('✅ Données chargées depuis le stockage');
                 } else {
                     document.getElementById('noProducts').style.display = 'block';
+                    console.log('ℹ️ Aucune donnée en cache');
                 }
             } catch (error) {
-                console.log('Aucune donnée stockée');
+                console.log('ℹ️ Pas de données stockées');
                 document.getElementById('noProducts').style.display = 'block';
             }
         }
@@ -503,9 +549,171 @@
         async function saveToStorage() {
             try {
                 await window.storage.set('appsheet-products', JSON.stringify(products));
+                console.log('💾 Sauvegarde réussie');
             } catch (error) {
-                console.error('Erreur de sauvegarde:', error);
+                console.error('❌ Erreur sauvegarde:', error);
             }
+        }
+
+        // ===== AFFICHAGE DES PRODUITS =====
+        function displayProducts() {
+            const grid = document.getElementById('productGrid');
+            const noProducts = document.getElementById('noProducts');
+            
+            if (filteredProducts.length === 0 && products.length > 0) {
+                filteredProducts = [...products];
+            }
+
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = '';
+                noProducts.style.display = 'block';
+                return;
+            }
+
+            noProducts.style.display = 'none';
+            grid.innerHTML = filteredProducts.map(product => {
+                const productId = product.id || product._RowNumber || product.code || Math.random().toString(36);
+                return `
+                    <div class="product-card" onclick="showProduct('${productId}')">
+                        <img class="product-image" 
+                             src="${product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image'}" 
+                             alt="${product.name || product.Name || product.code || 'Produit'}"
+                             onerror="this.src='https://via.placeholder.com/250x300/f5f5f5/666?text=Image+indisponible'"
+                             loading="lazy">
+                        <div class="product-info">
+                            <div class="product-code">${product.code || product.Code || 'N/A'}</div>
+                            <div class="product-name">${product.name || product.Name || 'Produit sans nom'}</div>
+                            <div>
+                                ${product.gamme || product.Gamme ? `<span class="product-tag">${product.gamme || product.Gamme}</span>` : ''}
+                                ${product.color || product.Color ? `<span class="product-tag">${product.color || product.Color}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== MODAL PRODUIT =====
+        function showProduct(id) {
+            const product = products.find(p => 
+                p.id === id || 
+                p._RowNumber === id || 
+                p.code === id ||
+                (p.id || p._RowNumber || p.code || '').toString() === id.toString()
+            );
+            
+            if (!product) {
+                console.warn('Produit non trouvé:', id);
+                return;
+            }
+
+            const modal = document.getElementById('productModal');
+            const mainImage = document.getElementById('modalMainImage');
+            const gallery = document.getElementById('modalGallery');
+            const info = document.getElementById('modalInfo');
+
+            // Image principale
+            mainImage.src = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/1000x500/f5f5f5/666?text=No+Image';
+
+            // Galerie d'images
+            const pics = [
+                product.pic_1 || product.Pic_1,
+                product.pic_2 || product.Pic_2,
+                product.pic_3 || product.Pic_3,
+                product.pic_4 || product.Pic_4,
+                product.pic_5 || product.Pic_5,
+                product.pic_6 || product.Pic_6
+            ].filter(pic => pic);
+            
+            gallery.innerHTML = pics.map(pic => 
+                `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'" loading="lazy">`
+            ).join('');
+
+            // Informations produit (gestion casse)
+            const getName = (p) => p.name || p.Name || 'Produit sans nom';
+            const getCode = (p) => p.code || p.Code || 'N/A';
+            const getGamme = (p) => p.gamme || p.Gamme;
+            const getSaison = (p) => p.saison || p.Saison;
+            const getType = (p) => p.type || p.Type;
+            const getNum = (p) => p.num || p.Num;
+            const getCollab = (p) => p.collab || p.Collab;
+            const getMaterial = (p) => p.material || p.Material;
+            const getColor = (p) => p.color || p.Color;
+            const getAd = (p) => p.ad || p.Ad || p.AD;
+            const getOcr = (p) => p.ocr || p.Ocr || p.OCR;
+
+            info.innerHTML = `
+                <h2>${getName(product)}</h2>
+                <div class="product-code" style="font-size: 1.1rem; margin-bottom: 20px;">${getCode(product)}</div>
+                
+                <div class="info-grid">
+                    ${getGamme(product) ? `<div class="info-item"><strong>Gamme</strong>${getGamme(product)}</div>` : ''}
+                    ${getSaison(product) ? `<div class="info-item"><strong>Saison</strong>${getSaison(product)}</div>` : ''}
+                    ${getType(product) ? `<div class="info-item"><strong>Type</strong>${getType(product)}</div>` : ''}
+                    ${getNum(product) ? `<div class="info-item"><strong>Numéro</strong>${getNum(product)}</div>` : ''}
+                    ${getCollab(product) ? `<div class="info-item"><strong>Collaboration</strong>${getCollab(product)}</div>` : ''}
+                    ${getMaterial(product) ? `<div class="info-item"><strong>Matériau</strong>${getMaterial(product)}</div>` : ''}
+                    ${getColor(product) ? `<div class="info-item"><strong>Couleur</strong>${getColor(product)}</div>` : ''}
+                    ${getAd(product) ? `<div class="info-item"><strong>AD</strong>${getAd(product)}</div>` : ''}
+                    ${getOcr(product) ? `<div class="info-item"><strong>OCR</strong>${getOcr(product)}</div>` : ''}
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        // ===== FILTRES =====
+        function populateFilters() {
+            const getGamme = (p) => p.gamme || p.Gamme;
+            const getSaison = (p) => p.saison || p.Saison;
+            const getType = (p) => p.type || p.Type;
+
+            const gammes = [...new Set(products.map(getGamme).filter(Boolean))].sort();
+            const saisons = [...new Set(products.map(getSaison).filter(Boolean))].sort();
+            const types = [...new Set(products.map(getType).filter(Boolean))].sort();
+
+            document.getElementById('gammeFilter').innerHTML = 
+                '<option value="">Toutes les gammes</option>' +
+                gammes.map(g => `<option value="${g}">${g}</option>`).join('');
+
+            document.getElementById('saisonFilter').innerHTML = 
+                '<option value="">Toutes les saisons</option>' +
+                saisons.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            document.getElementById('typeFilter').innerHTML = 
+                '<option value="">Tous les types</option>' +
+                types.map(t => `<option value="${t}">${t}</option>`).join('');
+            
+            applyURLFilters();
+        }
+
+        function filterProducts() {
+            const search = document.getElementById('searchBox').value.toLowerCase();
+            const gamme = document.getElementById('gammeFilter').value;
+            const saison = document.getElementById('saisonFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            filteredProducts = products.filter(product => {
+                const matchSearch = !search || 
+                    (product.name && product.name.toLowerCase().includes(search)) ||
+                    (product.Name && product.Name.toLowerCase().includes(search)) ||
+                    (product.code && product.code.toLowerCase().includes(search)) ||
+                    (product.Code && product.Code.toLowerCase().includes(search)) ||
+                    (product.color && product.color.toLowerCase().includes(search)) ||
+                    (product.Color && product.Color.toLowerCase().includes(search));
+                
+                const matchGamme = !gamme || (product.gamme === gamme || product.Gamme === gamme);
+                const matchSaison = !saison || (product.saison === saison || product.Saison === saison);
+                const matchType = !type || (product.type === type || product.Type === type);
+
+                return matchSearch && matchGamme && matchSaison && matchType;
+            });
+
+            displayProducts();
         }
 
         function applyURLFilters() {
@@ -515,6 +723,7 @@
             
             if (gamme) {
                 document.getElementById('gammeFilter').value = gamme;
+                filterProducts();
             }
             
             if (id) {
@@ -522,6 +731,7 @@
             }
         }
 
+        // ===== IMPORT MANUEL =====
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -531,10 +741,12 @@
             reader.onload = function(event) {
                 try {
                     if (file.name.endsWith('.json')) {
-                        products = JSON.parse(event.target.result);
+                        const data = JSON.parse(event.target.result);
+                        products = Array.isArray(data) ? data : (data.Rows || data.rows || []);
                     } else if (file.name.endsWith('.csv')) {
                         products = parseCSV(event.target.result);
                     }
+                    filteredProducts = [...products];
                     saveToStorage();
                     displayProducts();
                     populateFilters();
@@ -565,123 +777,7 @@
             return data;
         }
 
-        function displayProducts() {
-            const grid = document.getElementById('productGrid');
-            const noProducts = document.getElementById('noProducts');
-            
-            if (filteredProducts.length === 0 && products.length > 0) {
-                filteredProducts = [...products];
-            }
-
-            if (filteredProducts.length === 0) {
-                grid.innerHTML = '';
-                noProducts.style.display = 'block';
-                return;
-            }
-
-            noProducts.style.display = 'none';
-            grid.innerHTML = filteredProducts.map(product => `
-                <div class="product-card" onclick="showProduct('${product.id}')">
-                    <img class="product-image" 
-                         src="${product.pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image'}" 
-                         alt="${product.name || product.code}"
-                         onerror="this.src='https://via.placeholder.com/250x300/f5f5f5/666?text=Image+indisponible'">
-                    <div class="product-info">
-                        <div class="product-code">${product.code || 'N/A'}</div>
-                        <div class="product-name">${product.name || 'Produit sans nom'}</div>
-                        <div>
-                            ${product.gamme ? `<span class="product-tag">${product.gamme}</span>` : ''}
-                            ${product.color ? `<span class="product-tag">${product.color}</span>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function showProduct(id) {
-            const product = products.find(p => p.id === id);
-            if (!product) return;
-
-            const modal = document.getElementById('productModal');
-            const mainImage = document.getElementById('modalMainImage');
-            const gallery = document.getElementById('modalGallery');
-            const info = document.getElementById('modalInfo');
-
-            mainImage.src = product.pic_1 || 'https://via.placeholder.com/1000x500/f5f5f5/666?text=No+Image';
-
-            const pics = [product.pic_1, product.pic_2, product.pic_3, product.pic_4, product.pic_5, product.pic_6]
-                .filter(pic => pic);
-            
-            gallery.innerHTML = pics.map(pic => 
-                `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'">`
-            ).join('');
-
-            info.innerHTML = `
-                <h2>${product.name || 'Produit sans nom'}</h2>
-                <div class="product-code" style="font-size: 1.1rem; margin-bottom: 20px;">${product.code || 'N/A'}</div>
-                
-                <div class="info-grid">
-                    ${product.gamme ? `<div class="info-item"><strong>Gamme</strong>${product.gamme}</div>` : ''}
-                    ${product.saison ? `<div class="info-item"><strong>Saison</strong>${product.saison}</div>` : ''}
-                    ${product.type ? `<div class="info-item"><strong>Type</strong>${product.type}</div>` : ''}
-                    ${product.num ? `<div class="info-item"><strong>Numéro</strong>${product.num}</div>` : ''}
-                    ${product.collab ? `<div class="info-item"><strong>Collaboration</strong>${product.collab}</div>` : ''}
-                    ${product.material ? `<div class="info-item"><strong>Matériau</strong>${product.material}</div>` : ''}
-                    ${product.color ? `<div class="info-item"><strong>Couleur</strong>${product.color}</div>` : ''}
-                    ${product.ad ? `<div class="info-item"><strong>AD</strong>${product.ad}</div>` : ''}
-                    ${product.ocr ? `<div class="info-item"><strong>OCR</strong>${product.ocr}</div>` : ''}
-                </div>
-            `;
-
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('productModal').classList.remove('active');
-        }
-
-        function populateFilters() {
-            const gammes = [...new Set(products.map(p => p.gamme).filter(Boolean))];
-            const saisons = [...new Set(products.map(p => p.saison).filter(Boolean))];
-            const types = [...new Set(products.map(p => p.type).filter(Boolean))];
-
-            document.getElementById('gammeFilter').innerHTML = 
-                '<option value="">Toutes les gammes</option>' +
-                gammes.map(g => `<option value="${g}">${g}</option>`).join('');
-
-            document.getElementById('saisonFilter').innerHTML = 
-                '<option value="">Toutes les saisons</option>' +
-                saisons.map(s => `<option value="${s}">${s}</option>`).join('');
-
-            document.getElementById('typeFilter').innerHTML = 
-                '<option value="">Tous les types</option>' +
-                types.map(t => `<option value="${t}">${t}</option>`).join('');
-            
-            applyURLFilters();
-        }
-
-        function filterProducts() {
-            const search = document.getElementById('searchBox').value.toLowerCase();
-            const gamme = document.getElementById('gammeFilter').value;
-            const saison = document.getElementById('saisonFilter').value;
-            const type = document.getElementById('typeFilter').value;
-
-            filteredProducts = products.filter(product => {
-                const matchSearch = !search || 
-                    (product.name && product.name.toLowerCase().includes(search)) ||
-                    (product.code && product.code.toLowerCase().includes(search)) ||
-                    (product.color && product.color.toLowerCase().includes(search));
-                
-                const matchGamme = !gamme || product.gamme === gamme;
-                const matchSaison = !saison || product.saison === saison;
-                const matchType = !type || product.type === type;
-
-                return matchSearch && matchGamme && matchSaison && matchType;
-            });
-
-            displayProducts();
-        }
-
+        // ===== EVENT LISTENERS =====
         document.getElementById('searchBox').addEventListener('input', filterProducts);
         document.getElementById('gammeFilter').addEventListener('change', filterProducts);
         document.getElementById('saisonFilter').addEventListener('change', filterProducts);
@@ -691,7 +787,8 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // Charger au démarrage
+        // ===== INITIALISATION =====
+        console.log('🚀 Initialisation du catalogue...');
         loadFromStorage();
     </script>
 </body>
