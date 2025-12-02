@@ -408,6 +408,36 @@
         let products = [];
         let filteredProducts = [];
 
+        // ===== CONVERSION LIENS GOOGLE DRIVE =====
+        function convertGoogleDriveUrl(url) {
+            if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
+            
+            // Si c'est déjà une URL directe, la retourner
+            if (url.includes('uc?export=view') || url.includes('uc?id=')) {
+                return url;
+            }
+            
+            // Pattern 1: https://drive.google.com/file/d/FILE_ID/view
+            let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            
+            // Pattern 2: https://drive.google.com/open?id=FILE_ID
+            match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            
+            // Pattern 3: Si c'est juste un ID
+            if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
+                return `https://drive.google.com/uc?export=view&id=${url}`;
+            }
+            
+            // Sinon, retourner l'URL telle quelle
+            return url;
+        }
+
         // ===== SYNCHRONISATION APPSHEET OPTIMISÉE =====
         async function syncFromAppSheet() {
             const btn = document.getElementById('syncBtn');
@@ -415,17 +445,15 @@
             showStatus('🔄 Connexion à AppSheet...', '');
             showLoading(true);
 
-            // URL de l'API AppSheet
             const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_CONFIG.APP_ID}/tables/${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}/Action`;
             
-            // Configuration de la requête optimisée
             const requestBody = {
                 "Action": "Find",
                 "Properties": {
                     "Locale": "fr-FR",
                     "Timezone": "Europe/Paris"
                 },
-                "Rows": [] // Récupère toutes les lignes
+                "Rows": []
             };
 
             console.log('🚀 Démarrage synchronisation...');
@@ -462,7 +490,6 @@
                 const data = await response.json();
                 console.log('✅ Données reçues:', data);
 
-                // Gestion flexible de la structure de réponse
                 let rows = [];
                 if (Array.isArray(data)) {
                     rows = data;
@@ -477,7 +504,17 @@
                 console.log(`📊 ${rows.length} produits trouvés`);
 
                 if (rows.length > 0) {
-                    products = rows;
+                    // Convertir les URLs Google Drive pour chaque produit
+                    products = rows.map(product => ({
+                        ...product,
+                        pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                        pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                        pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                        pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                        pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                        pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                    }));
+                    
                     filteredProducts = [...products];
                     await saveToStorage();
                     displayProducts();
@@ -493,7 +530,6 @@
                 console.error('❌ Erreur complète:', error);
                 showStatus(`❌ ${error.message}`, 'error');
                 
-                // Afficher les détails dans la console
                 console.group('🔍 Diagnostic');
                 console.log('App ID:', APPSHEET_CONFIG.APP_ID);
                 console.log('Table:', APPSHEET_CONFIG.TABLE_NAME);
@@ -573,10 +609,12 @@
             noProducts.style.display = 'none';
             grid.innerHTML = filteredProducts.map(product => {
                 const productId = product.id || product._RowNumber || product.code || Math.random().toString(36);
+                const imageUrl = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
+                
                 return `
                     <div class="product-card" onclick="showProduct('${productId}')">
                         <img class="product-image" 
-                             src="${product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image'}" 
+                             src="${imageUrl}" 
                              alt="${product.name || product.Name || product.code || 'Produit'}"
                              onerror="this.src='https://via.placeholder.com/250x300/f5f5f5/666?text=Image+indisponible'"
                              loading="lazy">
@@ -623,13 +661,13 @@
                 product.pic_4 || product.Pic_4,
                 product.pic_5 || product.Pic_5,
                 product.pic_6 || product.Pic_6
-            ].filter(pic => pic);
+            ].filter(pic => pic && pic !== 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image');
             
             gallery.innerHTML = pics.map(pic => 
-                `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'" loading="lazy">`
+                `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'" loading="lazy" onerror="this.style.display='none'">`
             ).join('');
 
-            // Informations produit (gestion casse)
+            // Informations produit
             const getName = (p) => p.name || p.Name || 'Produit sans nom';
             const getCode = (p) => p.code || p.Code || 'N/A';
             const getGamme = (p) => p.gamme || p.Gamme;
@@ -742,9 +780,29 @@
                 try {
                     if (file.name.endsWith('.json')) {
                         const data = JSON.parse(event.target.result);
-                        products = Array.isArray(data) ? data : (data.Rows || data.rows || []);
+                        const rawProducts = Array.isArray(data) ? data : (data.Rows || data.rows || []);
+                        
+                        // Convertir les URLs lors de l'import
+                        products = rawProducts.map(product => ({
+                            ...product,
+                            pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                            pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                            pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                            pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                            pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                            pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                        }));
                     } else if (file.name.endsWith('.csv')) {
-                        products = parseCSV(event.target.result);
+                        const rawProducts = parseCSV(event.target.result);
+                        products = rawProducts.map(product => ({
+                            ...product,
+                            pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                            pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                            pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                            pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                            pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                            pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                        }));
                     }
                     filteredProducts = [...products];
                     saveToStorage();
