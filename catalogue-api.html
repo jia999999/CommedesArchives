@@ -409,34 +409,42 @@
         let filteredProducts = [];
 
         // ===== CONVERSION LIENS GOOGLE DRIVE =====
-        function convertGoogleDriveUrl(url) {
-            if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
-            
-            // Si c'est déjà une URL directe, la retourner
-            if (url.includes('uc?export=view') || url.includes('uc?id=')) {
-                return url;
-            }
-            
-            // Pattern 1: https://drive.google.com/file/d/FILE_ID/view
-            let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            
-            // Pattern 2: https://drive.google.com/open?id=FILE_ID
-            match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-            if (match) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
-            
-            // Pattern 3: Si c'est juste un ID
-            if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
-                return `https://drive.google.com/uc?export=view&id=${url}`;
-            }
-            
-            // Sinon, retourner l'URL telle quelle
-            return url;
-        }
+function convertGoogleDriveUrl(url) {
+    if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
+    
+    // Si c'est déjà une URL directe AppSheet, la retourner
+    if (url.includes('appsheet') || url.includes('https://')) {
+        return url;
+    }
+    
+    // Si c'est un chemin relatif AppSheet (ex: "BD Comme des Garçons_Images/...")
+    // AppSheet gère automatiquement ces chemins, on les retourne tels quels
+    // car ils seront convertis par AppSheet en URLs complètes
+    if (url.includes('_Images/') || url.includes('_Files/')) {
+        // Le chemin sera géré par AppSheet automatiquement
+        return url;
+    }
+    
+    // Pattern 1: https://drive.google.com/file/d/FILE_ID/view
+    let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    
+    // Pattern 2: https://drive.google.com/open?id=FILE_ID
+    match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    
+    // Pattern 3: Si c'est juste un ID
+    if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
+        return `https://drive.google.com/uc?export=view&id=${url}`;
+    }
+    
+    // Sinon, retourner l'URL telle quelle
+    return url;
+}
 
         // ===== SYNCHRONISATION APPSHEET OPTIMISÉE =====
         async function syncFromAppSheet() {
