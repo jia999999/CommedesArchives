@@ -10,217 +10,354 @@
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            background: white;
+            background: #fafafa;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            width: 100vw;
             height: 100vh;
+        }
+        
+        .container {
             position: relative;
+            width: 100%;
+            height: 100%;
         }
-
-        .nav {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .nav a {
-            text-decoration: none;
-            color: #333;
-            font-size: 0.9rem;
-            padding: 8px 16px;
-            border-radius: 20px;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .nav a:hover {
-            background: #f0f0f0;
-            color: #000;
-        }
-
-        .logo-container {
+        
+        .center-logo {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            z-index: 1;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+        
+        .image {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            z-index: 2;
+            cursor: pointer;
+            will-change: transform;
+            backface-visibility: hidden;
+        }
+        
+        .image:hover {
+            transform: scale(1.2) !important;
             z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #666;
+            z-index: 0;
             text-align: center;
         }
 
-        .logo {
-            max-width: 400px;
-            width: 80vw;
-            height: auto;
-            filter: none;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
         }
 
-        .floating-product {
-            position: absolute;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .floating-product:hover {
-            transform: scale(1.1) !important;
-            z-index: 50;
-        }
-
-        .floating-product img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-            25% {
-                transform: translate(30px, -30px) rotate(5deg);
-            }
-            50% {
-                transform: translate(-20px, 20px) rotate(-5deg);
-            }
-            75% {
-                transform: translate(20px, 30px) rotate(3deg);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .logo {
-                max-width: 280px;
-            }
-            
-            .nav {
-                flex-wrap: wrap;
-                justify-content: center;
-                max-width: 90vw;
-            }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <nav class="nav" id="nav">
-        <a href="catalogue-api.html">Tous les produits</a>
-    </nav>
+	<div class="container" id="container">
+		<div class="center-logo">
+			<img src="https://raw.githubusercontent.com/jia999999/CommedesArchives/main/COMMEdesARCHIVES_LOGO.png" 
+				 alt="Logo" class="logo">
+		</div>
 
-    <div class="logo-container">
-        <img src="https://raw.githubusercontent.com/jia999999/CommedesArchives/main/COMMEdesARCHIVES_LOGO.png" 
-             alt="Logo" class="logo"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        
-        <h1 style="display: none; font-size: 4rem; font-weight: 300; color: #000;">
-            COLLECTION
-
-    <div id="floatingProducts"></div>
+		<div class="loading" id="loading">
+			<div class="spinner"></div>
+			<p>Chargement des images...</p>
+		</div>
+	</div>
 
     <script>
+        const APPSHEET_CONFIG = {
+            APP_ID: "b3c294e1-c530-4166-baea-cb6da2b1fff5",
+            TABLE_NAME: "BD Comme des Garçons",
+            ACCESS_KEY: "V2-24Cwk-OPyi3-BTjrR-S9t45-SlenX-OKflA-ruzEK-IXwJ4"
+        };
+
+        const container = document.getElementById('container');
+        const loading = document.getElementById('loading');
+        let centerX = window.innerWidth / 2;
+        let centerY = window.innerHeight / 2;
         let products = [];
 
-        async function loadProducts() {
+        // Mise à jour du centre lors du redimensionnement
+        function updateCenter() {
+            centerX = window.innerWidth / 2;
+            centerY = window.innerHeight / 2;
+        }
+
+        window.addEventListener('resize', updateCenter);
+        window.addEventListener('orientationchange', updateCenter);
+
+        function convertGoogleDriveUrl(url) {
+            if (!url) return null;
+            
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            
+            if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
+                return `https://drive.google.com/uc?export=view&id=${url}`;
+            }
+            
+            const fileName = url;
+            const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fileName=${encodeURIComponent(fileName)}`;
+            
+            return appSheetUrl;
+        }
+
+        async function loadData() {
+            const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_CONFIG.APP_ID}/tables/${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}/Action`;
+            
+            const requestBody = {
+                "Action": "Find",
+                "Properties": {
+                    "Locale": "fr-FR",
+                    "Timezone": "Europe/Paris"
+                },
+                "Rows": []
+            };
+
             try {
-                const result = await window.storage.get('appsheet-products');
-                if (result && result.value) {
-                    products = JSON.parse(result.value);
-                    createFloatingProducts();
-                    createNavigation();
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'ApplicationAccessKey': APPSHEET_CONFIG.ACCESS_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}`);
                 }
+
+                const data = await response.json();
+
+                let rows = [];
+                if (Array.isArray(data)) {
+                    rows = data;
+                } else if (data.Rows && Array.isArray(data.Rows)) {
+                    rows = data.Rows;
+                } else if (data.rows && Array.isArray(data.rows)) {
+                    rows = data.rows;
+                } else if (data.value && Array.isArray(data.value)) {
+                    rows = data.value;
+                }
+
+                if (rows.length > 0) {
+                    // Convertir toutes les URLs d'images
+                    products = rows.map(product => ({
+                        ...product,
+                        pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                        pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                        pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                        pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                        pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                        pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                    }));
+                    
+                    console.log(`${products.length} produits chargés`);
+                    loading.style.display = 'none';
+                    createImageAnimation();
+                } else {
+                    throw new Error('Aucun produit trouvé');
+                }
+
             } catch (error) {
-                console.log('Aucune donnée trouvée');
+                console.error('Erreur:', error);
+                loading.innerHTML = '<p>Erreur de chargement<br>Utilisation du mode démo</p>';
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    createFallbackAnimation();
+                }, 2000);
             }
         }
 
-        function createNavigation() {
-            const gammes = [...new Set(products.map(p => p.gamme).filter(Boolean))];
-            const nav = document.getElementById('nav');
-            
-            gammes.forEach(gamme => {
-                const link = document.createElement('a');
-                link.href = `catalogue-api.html?gamme=${encodeURIComponent(gamme)}`;
-                link.textContent = gamme;
-                nav.appendChild(link);
+        function createImageAnimation() {
+            // Collecter toutes les images disponibles
+            const allImages = [];
+            products.forEach(product => {
+                const pics = [
+                    product.pic_1,
+                    product.pic_2,
+                    product.pic_3,
+                    product.pic_4,
+                    product.pic_5,
+                    product.pic_6
+                ].filter(pic => pic);
+                
+                allImages.push(...pics);
             });
-        }
 
-        function createFloatingProducts() {
-            const container = document.getElementById('floatingProducts');
-            const productsWithImages = products.filter(p => p.pic_1);
-            
-            // Mélanger aléatoirement
-            const shuffled = productsWithImages.sort(() => Math.random() - 0.5);
-            
-            // Limiter le nombre pour ne pas surcharger
-            const count = Math.min(shuffled.length, 25);
-            
-            for (let i = 0; i < count; i++) {
-                const product = shuffled[i];
-                const div = document.createElement('div');
-                div.className = 'floating-product';
-                
-                // Taille aléatoire
-                const size = Math.random() * 120 + 80; // Entre 80 et 200px
-                div.style.width = size + 'px';
-                div.style.height = size + 'px';
-                
-                // Position aléatoire en évitant le centre
-                let x, y;
-                do {
-                    x = Math.random() * (window.innerWidth - size);
-                    y = Math.random() * (window.innerHeight - size);
-                } while (
-                    x > window.innerWidth * 0.3 && x < window.innerWidth * 0.7 &&
-                    y > window.innerHeight * 0.3 && y < window.innerHeight * 0.7
-                );
-                
-                div.style.left = x + 'px';
-                div.style.top = y + 'px';
-                
-                // Animation aléatoire
-                div.style.animationDelay = (Math.random() * 10) + 's';
-                div.style.animationDuration = (Math.random() * 15 + 15) + 's';
-                
-                // Opacité aléatoire
-                div.style.opacity = Math.random() * 0.4 + 0.4; // Entre 0.4 et 0.8
-                
+            // Limiter à 50 images max et mélanger
+            const shuffled = allImages.sort(() => Math.random() - 0.5);
+            const selectedImages = shuffled.slice(0, 50);
+            const numImages = selectedImages.length;
+
+            console.log(`Affichage de ${numImages} images`);
+
+            const fragment = document.createDocumentFragment();
+
+            selectedImages.forEach((imageUrl, i) => {
                 const img = document.createElement('img');
-                img.src = product.pic_1;
-                img.alt = product.name || product.code;
+                img.src = imageUrl;
+                img.className = 'image';
+                img.alt = 'Comme des Garçons';
+                img.loading = 'eager';
                 
-                div.appendChild(img);
-                div.onclick = () => {
-                    window.location.href = `catalogue-api.html?id=${product.id}`;
+                // Redirection vers le catalogue au clic
+                img.addEventListener('click', () => {
+                    window.location.href = 'catalogue-api.html';
+                });
+                
+                // Gestion des erreurs de chargement
+                img.onerror = function() {
+                    this.style.display = 'none';
                 };
                 
-                container.appendChild(div);
-            }
+                // Position initiale au centre
+                img.style.left = `${centerX - 50}px`;
+                img.style.top = `${centerY - 50}px`;
+                img.style.opacity = '0';
+                
+                fragment.appendChild(img);
+                
+                // Animation avec délai progressif
+                setTimeout(() => {
+                    const angle = (i / numImages) * Math.PI * 2;
+                    const radius = 280 + Math.random() * 120;
+                    const finalX = centerX + Math.cos(angle) * radius - 50;
+                    const finalY = centerY + Math.sin(angle) * radius - 50;
+                    const rotation = Math.random() * 360 - 180;
+                    const duration = 1.5 + Math.random() * 0.5;
+                    
+                    img.style.transition = `all ${duration}s cubic-bezier(0.34, 1.56, 0.64, 1)`;
+                    img.style.opacity = '1';
+                    img.style.left = `${finalX}px`;
+                    img.style.top = `${finalY}px`;
+                    img.style.transform = `rotate(${rotation}deg)`;
+                }, i * 30);
+            });
+
+            container.appendChild(fragment);
+            
+            // Démarrer l'animation continue après 2 secondes
+            setTimeout(() => {
+                animateRotation();
+            }, 2000);
         }
 
-        // Charger au démarrage
-        loadProducts();
+        function createFallbackAnimation() {
+            const numImages = 50;
+            const topics = ['fashion', 'style', 'clothing', 'design', 'art', 'minimal'];
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < numImages; i++) {
+                const img = document.createElement('img');
+                const topic = topics[Math.floor(Math.random() * topics.length)];
+                const randomId = Math.floor(Math.random() * 1000);
+                img.src = `https://source.unsplash.com/random/200x200?${topic}&sig=${randomId}`;
+                img.className = 'image';
+                img.loading = 'eager';
+                
+                // Redirection vers le catalogue au clic
+                img.addEventListener('click', () => {
+                    window.location.href = 'catalogue-api.html';
+                });
+                
+                img.style.left = `${centerX - 50}px`;
+                img.style.top = `${centerY - 50}px`;
+                img.style.opacity = '0';
+                
+                fragment.appendChild(img);
+                
+                setTimeout(() => {
+                    const angle = (i / numImages) * Math.PI * 2;
+                    const radius = 280 + Math.random() * 120;
+                    const finalX = centerX + Math.cos(angle) * radius - 50;
+                    const finalY = centerY + Math.sin(angle) * radius - 50;
+                    const rotation = Math.random() * 360 - 180;
+                    const duration = 1.5 + Math.random() * 0.5;
+                    
+                    img.style.transition = `all ${duration}s cubic-bezier(0.34, 1.56, 0.64, 1)`;
+                    img.style.opacity = '1';
+                    img.style.left = `${finalX}px`;
+                    img.style.top = `${finalY}px`;
+                    img.style.transform = `rotate(${rotation}deg)`;
+                }, i * 30);
+            }
 
-        // Recharger les positions au redimensionnement
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                document.getElementById('floatingProducts').innerHTML = '';
-                createFloatingProducts();
-            }, 250);
-        });
+            container.appendChild(fragment);
+            
+            setTimeout(() => {
+                animateRotation();
+            }, 2000);
+        }
+
+        // Animation continue de rotation infinie optimisée
+        let rotationAngle = 0;
+        let animationFrameId = null;
+        
+        function animateRotation() {
+            rotationAngle += 0.3;
+            const images = document.querySelectorAll('.image');
+            const numImages = images.length;
+            
+            // Récupérer le centre actuel
+            const currentCenterX = window.innerWidth / 2;
+            const currentCenterY = window.innerHeight / 2;
+            
+            images.forEach((img, i) => {
+                const baseAngle = (i / numImages) * Math.PI * 2;
+                const currentAngle = baseAngle + (rotationAngle * Math.PI / 180);
+                const baseRadius = 280 + (i % 3) * 40;
+                const radius = baseRadius + Math.sin(rotationAngle * 0.02 + i) * 20;
+                const x = currentCenterX + Math.cos(currentAngle) * radius - 50;
+                const y = currentCenterY + Math.sin(currentAngle) * radius - 50;
+                
+                // Positionnement fixe par rapport au viewport
+                img.style.left = `${x}px`;
+                img.style.top = `${y}px`;
+            });
+            
+            animationFrameId = requestAnimationFrame(animateRotation);
+        }
+
+        // Chargement automatique au démarrage
+        loadData();
     </script>
 </body>
 </html>
