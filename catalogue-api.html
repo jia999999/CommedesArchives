@@ -37,25 +37,6 @@
             flex-wrap: wrap;
         }
 
-        .logo-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-        .logo-img {
-            height: 21px;
-            width: auto;
-            margin-right: 10px;
-            display: block;
-        }
-        @media (max-width: 500px) {
-            .logo-img {
-                height: 32px;
-                margin-right: 5px;
-            }
-        }
-
         .back-btn {
             text-decoration: none;
             color: #000;
@@ -93,6 +74,63 @@
             background: white;
             cursor: pointer;
             font-size: 0.95rem;
+        }
+
+        .sync-btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-btn:hover {
+            background: #45a049;
+        }
+
+        .sync-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .import-btn {
+            padding: 10px 20px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .import-btn:hover {
+            background: #333;
+        }
+
+        .status {
+            font-size: 0.85rem;
+            color: #666;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            max-width: 300px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         .container {
@@ -281,17 +319,21 @@
             100% { transform: rotate(360deg); }
         }
 
+        input[type="file"] {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+
             .controls {
                 flex-direction: column;
                 width: 100%;
             }
-            
+
             .search-box, select {
                 width: 100%;
             }
@@ -301,33 +343,49 @@
 <body>
     <div class="header">
         <div class="header-content">
-            <!-- Ajout du logo à gauche, puis bouton accueil à côté -->
-            <a href="index.html" class="logo-link">
-                <img src="COMMEdesARCHIVES_LOGO.png" alt="Comme des Archives Logo" class="logo-img"/>
-                <span class="back-btn">← Accueil</span>
-            </a>
+            <a href="index.html" class="back-btn">← Accueil</a>
+
             <div class="controls">
                 <input type="text" class="search-box" id="searchBox" placeholder="Rechercher...">
+
                 <select id="gammeFilter">
                     <option value="">Toutes les gammes</option>
                 </select>
+
                 <select id="saisonFilter">
                     <option value="">Toutes les saisons</option>
                 </select>
+
                 <select id="typeFilter">
                     <option value="">Tous les types</option>
                 </select>
+
+                <button class="sync-btn" id="syncBtn" onclick="syncFromAppSheet()">
+                    <span>🔄</span>
+                    <span>Sync AppSheet</span>
+                </button>
+                
+                <label for="fileInput">
+                    <button class="import-btn" onclick="document.getElementById('fileInput').click()">
+                        Import manuel
+                    </button>
+                </label>
+                <input type="file" id="fileInput" accept=".json,.csv">
+                
+                <div class="status" id="status" style="display: none;"></div>
             </div>
         </div>
     </div>
 
     <div class="container">
+        <div class="loading" id="loading" style="display: none;">
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Chargement des données...</p>
         </div>
         <div class="product-grid" id="productGrid"></div>
         <div class="no-products" id="noProducts" style="display: none;">
+            Aucun produit trouvé. Cliquez sur "Sync AppSheet" pour charger vos données.
             Aucun produit trouvé.
         </div>
     </div>
@@ -342,6 +400,7 @@
     </div>
 
     <script>
+        // ===== CONFIGURATION APPSHEET =====
         const APPSHEET_CONFIG = {
             APP_ID: "b3c294e1-c530-4166-baea-cb6da2b1fff5",
             TABLE_NAME: "BD Comme des Garçons",
@@ -351,26 +410,54 @@
         let products = [];
         let filteredProducts = [];
 
+		// ===== CONVERSION LIENS APPSHEET & GOOGLE DRIVE RÉVISÉE =====
+		function convertGoogleDriveUrl(url) {
+			// Si l'URL est vide, retourner l'image par défaut
+			if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
+
+			// 1. Si l'URL est déjà une URL complète (ex: Google Drive, Dropbox, etc.)
+			if (url.startsWith('http://') || url.startsWith('https://')) {
+				return url;
+			}
         function convertGoogleDriveUrl(url) {
             if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
 
+			// 2. Si c'est un ID Google Drive pur (25+ caractères alphanumériques)
+			if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
+				return `https://drive.google.com/uc?export=view&id=${url}`;
+			}
+
+			// 3. Chemin de fichier relatif AppSheet (le cas le plus probable)
+			// Ex: "BD Comme des Garçons_Images/xyz123.jpg"
+			const fileName = url;
             if (url.startsWith('http://') || url.startsWith('https://')) {
                 return url;
             }
 
+			// Construit l'URL d'accès au fichier via l'API AppSheet
+			const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fileName=${encodeURIComponent(fileName)}`;
             if (url.match(/^[a-zA-Z0-9_-]{25,}$/)) {
                 return `https://drive.google.com/uc?export=view&id=${url}`;
             }
 
+			// Retourne l'URL AppSheet
+			return appSheetUrl;
+		}
             const fileName = url;
-            const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fil[...]
+            const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fileName=${encodeURIComponent(fileName)}`;
 
+        // ===== SYNCHRONISATION APPSHEET OPTIMISÉE =====
+        async function syncFromAppSheet() {
+            const btn = document.getElementById('syncBtn');
+            btn.disabled = true;
+            showStatus('🔄 Connexion à AppSheet...', '');
+            showLoading(true);
             return appSheetUrl;
         }
 
         async function loadData() {
             const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_CONFIG.APP_ID}/tables/${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}/Action`;
-            
+
             const requestBody = {
                 "Action": "Find",
                 "Properties": {
@@ -379,6 +466,10 @@
                 },
                 "Rows": []
             };
+
+            console.log('🚀 Démarrage synchronisation...');
+            console.log('📍 URL:', url);
+            console.log('📦 Body:', JSON.stringify(requestBody, null, 2));
 
             try {
                 const response = await fetch(url, {
@@ -390,11 +481,26 @@
                     body: JSON.stringify(requestBody)
                 });
 
+                console.log('📡 Status:', response.status, response.statusText);
+
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Erreur serveur:', errorText);
+                    
+                    let errorMessage = `Erreur ${response.status}`;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.Message || errorJson.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
                     throw new Error(`Erreur ${response.status}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ Données reçues:', data);
 
                 let rows = [];
                 if (Array.isArray(data)) {
@@ -407,7 +513,10 @@
                     rows = data.value;
                 }
 
+                console.log(`📊 ${rows.length} produits trouvés`);
+
                 if (rows.length > 0) {
+                    // Convertir les URLs Google Drive pour chaque produit
                     products = rows.map(product => ({
                         ...product,
                         pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
@@ -417,17 +526,82 @@
                         pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
                         pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
                     }));
-                    
+
                     filteredProducts = [...products];
+                    await saveToStorage();
                     displayProducts();
                     populateFilters();
+                    showStatus(`✅ ${products.length} produits synchronisés !`, 'success');
+                    console.log('💾 Données sauvegardées');
+                } else {
+                    showStatus('⚠️ Aucun produit trouvé dans la base', 'error');
+                    console.warn('⚠️ Structure de réponse:', data);
+                }
+
+            } catch (error) {
+                console.error('❌ Erreur complète:', error);
+                showStatus(`❌ ${error.message}`, 'error');
+                
+                console.group('🔍 Diagnostic');
+                console.log('App ID:', APPSHEET_CONFIG.APP_ID);
+                console.log('Table:', APPSHEET_CONFIG.TABLE_NAME);
+                console.log('Access Key:', APPSHEET_CONFIG.ACCESS_KEY ? '✓ Définie' : '✗ Manquante');
+                console.groupEnd();
+            } finally {
+                btn.disabled = false;
+                showLoading(false);
+            }
+        }
+
+        // ===== GESTION DU STATUT =====
+        function showStatus(message, type = '') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('productGrid').style.display = show ? 'none' : 'grid';
+        }
+
+        // ===== STOCKAGE PERSISTANT =====
+        async function loadFromStorage() {
+            try {
+                const result = await window.storage.get('appsheet-products');
+                if (result && result.value) {
+                    products = JSON.parse(result.value);
+                    filteredProducts = [...products];
+                    applyURLFilters();
+                    displayProducts();
+                    populateFilters();
+                    showStatus(`📦 ${products.length} produits chargés`, 'success');
+                    console.log('✅ Données chargées depuis le stockage');
                     document.getElementById('loading').style.display = 'none';
                 } else {
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('noProducts').style.display = 'block';
+                    console.log('ℹ️ Aucune donnée en cache');
                 }
-
             } catch (error) {
+                console.log('ℹ️ Pas de données stockées');
+                document.getElementById('noProducts').style.display = 'block';
+            }
+        }
+
+        async function saveToStorage() {
+            try {
+                await window.storage.set('appsheet-products', JSON.stringify(products));
+                console.log('💾 Sauvegarde réussie');
+            } catch (error) {
+                console.error('❌ Erreur sauvegarde:', error);
                 console.error('Erreur:', error);
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('noProducts').textContent = 'Erreur de chargement des données';
@@ -435,10 +609,11 @@
             }
         }
 
+        // ===== AFFICHAGE DES PRODUITS =====
         function displayProducts() {
             const grid = document.getElementById('productGrid');
             const noProducts = document.getElementById('noProducts');
-            
+
             if (filteredProducts.length === 0 && products.length > 0) {
                 filteredProducts = [...products];
             }
@@ -453,7 +628,7 @@
             grid.innerHTML = filteredProducts.map(product => {
                 const productId = product.id || product._RowNumber || product.code || Math.random().toString(36);
                 const imageUrl = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
-                
+
                 return `
                     <div class="product-card" onclick="showProduct('${productId}')">
                         <img class="product-image" 
@@ -474,6 +649,7 @@
             }).join('');
         }
 
+        // ===== MODAL PRODUIT =====
         function showProduct(id) {
             const product = products.find(p => 
                 p.id === id || 
@@ -481,7 +657,7 @@
                 p.code === id ||
                 (p.id || p._RowNumber || p.code || '').toString() === id.toString()
             );
-            
+
             if (!product) {
                 console.warn('Produit non trouvé:', id);
                 return;
@@ -492,8 +668,10 @@
             const gallery = document.getElementById('modalGallery');
             const info = document.getElementById('modalInfo');
 
+            // Image principale
             mainImage.src = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/1000x500/f5f5f5/666?text=No+Image';
 
+            // Galerie d'images
             const pics = [
                 product.pic_1 || product.Pic_1,
                 product.pic_2 || product.Pic_2,
@@ -502,11 +680,12 @@
                 product.pic_5 || product.Pic_5,
                 product.pic_6 || product.Pic_6
             ].filter(pic => pic && pic !== 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image');
-            
+
             gallery.innerHTML = pics.map(pic => 
                 `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'" loading="lazy" onerror="this.style.display='none'">`
             ).join('');
 
+            // Informations produit
             const getName = (p) => p.name || p.Name || 'Produit sans nom';
             const getCode = (p) => p.code || p.Code || 'N/A';
             const getGamme = (p) => p.gamme || p.Gamme;
@@ -543,6 +722,7 @@
             document.getElementById('productModal').classList.remove('active');
         }
 
+        // ===== FILTRES =====
         function populateFilters() {
             const getGamme = (p) => p.gamme || p.Gamme;
             const getSaison = (p) => p.saison || p.Saison;
@@ -563,7 +743,7 @@
             document.getElementById('typeFilter').innerHTML = 
                 '<option value="">Tous les types</option>' +
                 types.map(t => `<option value="${t}">${t}</option>`).join('');
-            
+
             applyURLFilters();
         }
 
@@ -581,7 +761,7 @@
                     (product.Code && product.Code.toLowerCase().includes(search)) ||
                     (product.color && product.color.toLowerCase().includes(search)) ||
                     (product.Color && product.Color.toLowerCase().includes(search));
-                
+
                 const matchGamme = !gamme || (product.gamme === gamme || product.Gamme === gamme);
                 const matchSaison = !saison || (product.saison === saison || product.Saison === saison);
                 const matchType = !type || (product.type === type || product.Type === type);
@@ -596,17 +776,84 @@
             const params = new URLSearchParams(window.location.search);
             const gamme = params.get('gamme');
             const id = params.get('id');
-            
+
             if (gamme) {
                 document.getElementById('gammeFilter').value = gamme;
                 filterProducts();
             }
-            
+
             if (id) {
                 setTimeout(() => showProduct(id), 100);
             }
         }
 
+        // ===== IMPORT MANUEL =====
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showLoading(true);
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const data = JSON.parse(event.target.result);
+                        const rawProducts = Array.isArray(data) ? data : (data.Rows || data.rows || []);
+                        
+                        // Convertir les URLs lors de l'import
+                        products = rawProducts.map(product => ({
+                            ...product,
+                            pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                            pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                            pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                            pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                            pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                            pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                        }));
+                    } else if (file.name.endsWith('.csv')) {
+                        const rawProducts = parseCSV(event.target.result);
+                        products = rawProducts.map(product => ({
+                            ...product,
+                            pic_1: convertGoogleDriveUrl(product.pic_1 || product.Pic_1),
+                            pic_2: convertGoogleDriveUrl(product.pic_2 || product.Pic_2),
+                            pic_3: convertGoogleDriveUrl(product.pic_3 || product.Pic_3),
+                            pic_4: convertGoogleDriveUrl(product.pic_4 || product.Pic_4),
+                            pic_5: convertGoogleDriveUrl(product.pic_5 || product.Pic_5),
+                            pic_6: convertGoogleDriveUrl(product.pic_6 || product.Pic_6)
+                        }));
+                    }
+                    filteredProducts = [...products];
+                    saveToStorage();
+                    displayProducts();
+                    populateFilters();
+                    showStatus(`✅ ${products.length} produits importés`, 'success');
+                } catch (error) {
+                    showStatus('❌ Erreur lors de l\'import: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const values = lines[i].split(',');
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = values[index] ? values[index].trim() : '';
+                });
+                data.push(obj);
+            }
+            return data;
+        }
+
+        // ===== EVENT LISTENERS =====
         document.getElementById('searchBox').addEventListener('input', filterProducts);
         document.getElementById('gammeFilter').addEventListener('change', filterProducts);
         document.getElementById('saisonFilter').addEventListener('change', filterProducts);
@@ -616,6 +863,9 @@
             if (e.key === 'Escape') closeModal();
         });
 
+        // ===== INITIALISATION =====
+        console.log('🚀 Initialisation du catalogue...');
+        loadFromStorage();
         // Chargement automatique au démarrage
         loadData();
     </script>
