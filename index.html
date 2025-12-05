@@ -207,19 +207,15 @@
         }
 
         function createImageAnimation() {
-            // Collecter toutes les images disponibles
+            // Collecter uniquement les pic_1 des produits avec front = true
             const allImages = [];
             products.forEach(product => {
-                const pics = [
-                    product.pic_1,
-                    product.pic_2,
-                    product.pic_3,
-                    product.pic_4,
-                    product.pic_5,
-                    product.pic_6
-                ].filter(pic => pic);
+                // Vérifier si front est true (booléen ou string)
+                const isFront = product.front === true || product.front === 'true' || product.front === 'TRUE' || product.Front === true || product.Front === 'true' || product.Front === 'TRUE';
                 
-                allImages.push(...pics);
+                if (isFront && product.pic_1) {
+                    allImages.push(product.pic_1);
+                }
             });
 
             // Limiter à 50 images max et mélanger
