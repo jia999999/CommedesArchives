@@ -37,6 +37,25 @@
             flex-wrap: wrap;
         }
 
+        .logo-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .logo-img {
+            height: 46px;
+            width: auto;
+            margin-right: 10px;
+            display: block;
+        }
+        @media (max-width: 500px) {
+            .logo-img {
+                height: 32px;
+                margin-right: 5px;
+            }
+        }
+
         .back-btn {
             text-decoration: none;
             color: #000;
@@ -282,19 +301,19 @@
 <body>
     <div class="header">
         <div class="header-content">
-            <a href="index.html" class="back-btn">← Accueil</a>
-            
+            <!-- Ajout du logo à gauche, puis bouton accueil à côté -->
+            <a href="index.html" class="logo-link">
+                <img src="COMMEdesARCHIVES_LOGO.png" alt="Comme des Archives Logo" class="logo-img"/>
+                <span class="back-btn">← Accueil</span>
+            </a>
             <div class="controls">
                 <input type="text" class="search-box" id="searchBox" placeholder="Rechercher...">
-                
                 <select id="gammeFilter">
                     <option value="">Toutes les gammes</option>
                 </select>
-                
                 <select id="saisonFilter">
                     <option value="">Toutes les saisons</option>
                 </select>
-                
                 <select id="typeFilter">
                     <option value="">Tous les types</option>
                 </select>
@@ -344,7 +363,7 @@
             }
 
             const fileName = url;
-            const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fileName=${encodeURIComponent(fileName)}`;
+            const appSheetUrl = `https://www.appsheet.com/template/gettablefileurl?appName=${encodeURIComponent(APPSHEET_CONFIG.APP_ID)}&tableName=${encodeURIComponent(APPSHEET_CONFIG.TABLE_NAME)}&fil[...]
 
             return appSheetUrl;
         }
