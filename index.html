@@ -206,17 +206,24 @@
             }
         }
 
-        function createImageAnimation() {
-            // Collecter uniquement les pic_1 des produits avec front = true
+		function createImageAnimation() {
+            // Collecter uniquement les pic_1 des produits avec front = Yes
             const allImages = [];
             products.forEach(product => {
-                // Vérifier si front est true (booléen ou string)
-                const isFront = product.front === true || product.front === 'true' || product.front === 'TRUE' || product.Front === true || product.Front === 'true' || product.Front === 'TRUE';
+                // Vérifier si front est Yes (AppSheet Yes/No format)
+                const isFront = product.front === 'Yes' || product.front === 'YES' || 
+                               product.Front === 'Yes' || product.Front === 'YES' ||
+                               product.front === true || product.Front === true;
+                
+                console.log('Product front value:', product.front || product.Front, 'isFront:', isFront);
                 
                 if (isFront && product.pic_1) {
                     allImages.push(product.pic_1);
                 }
             });
+
+            console.log(`Total products: ${products.length}, Images with front=Yes: ${allImages.length}`);
+
 
             // Limiter à 50 images max et mélanger
             const shuffled = allImages.sort(() => Math.random() - 0.5);
