@@ -207,22 +207,19 @@
         }
 
 		function createImageAnimation() {
-            // Collecter uniquement les pic_1 des produits avec front = Yes
+            // Collecter uniquement les pic_1 des produits avec front = Y
             const allImages = [];
             products.forEach(product => {
-                // Vérifier si front est Yes (AppSheet Yes/No format)
-                const isFront = product.front === 'Yes' || product.front === 'YES' || 
-                               product.Front === 'Yes' || product.Front === 'YES' ||
-                               product.front === true || product.Front === true;
-                
-                console.log('Product front value:', product.front || product.Front, 'isFront:', isFront);
+                // Vérifier si front est Y (AppSheet Yes/No format retourne Y/N)
+                const isFront = product.front === 'Y' || product.Front === 'Y';
                 
                 if (isFront && product.pic_1) {
                     allImages.push(product.pic_1);
                 }
             });
 
-            console.log(`Total products: ${products.length}, Images with front=Yes: ${allImages.length}`);
+            console.log(`Total products: ${products.length}, Images with front=Y: ${allImages.length}`);
+
 
 
             // Limiter à 50 images max et mélanger
