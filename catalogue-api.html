@@ -15,16 +15,17 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #fafafa;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         .header {
             background: white;
             border-bottom: 1px solid #e0e0e0;
-            padding: 15px 20px;
+            padding: 12px 20px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -44,7 +45,7 @@
         }
 
         .logo {
-            height: 50px;
+            height: 35px;
             width: auto;
             transition: opacity 0.3s;
         }
@@ -56,61 +57,70 @@
         .controls-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             flex: 1;
             max-width: 800px;
         }
 
         .search-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
         }
 
         .filters-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             flex-wrap: wrap;
         }
 
         .search-box {
             flex: 1;
-            padding: 12px 20px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
+            padding: 11px 18px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 24px;
             font-size: 0.95rem;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: all 0.3s ease;
             min-width: 0;
+            background: #fafafa;
         }
 
         .search-box:focus {
             outline: none;
             border-color: #000;
-            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         select {
             flex: 1;
-            min-width: 150px;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            background: white;
+            min-width: 140px;
+            padding: 11px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 24px;
+            background: #fafafa;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: border-color 0.3s;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
         }
 
         select:focus {
             outline: none;
             border-color: #000;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 30px 15px;
+            padding: 25px 15px;
         }
 
         .product-grid {
@@ -123,14 +133,18 @@
             background: white;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
         }
 
         .product-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        }
+
+        .product-card:active {
+            transform: translateY(-3px);
         }
 
         .product-image {
@@ -138,24 +152,30 @@
             height: 320px;
             object-fit: cover;
             background: #f5f5f5;
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.03);
         }
 
         .product-info {
-            padding: 18px;
+            padding: 16px;
         }
 
         .product-code {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #999;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .product-name {
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #000;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.4;
         }
 
@@ -166,12 +186,13 @@
         }
 
         .product-tag {
-            padding: 5px 12px;
-            background: #f0f0f0;
-            border-radius: 14px;
-            font-size: 0.8rem;
+            padding: 5px 11px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            font-size: 0.75rem;
             color: #666;
             white-space: nowrap;
+            font-weight: 500;
         }
 
         .modal {
@@ -181,57 +202,79 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.92);
+            background: rgba(0,0,0,0.94);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal.active {
-            display: flex;
+            display: block;
+        }
+
+        .modal-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .modal-content {
             background: white;
             border-radius: 0;
-            max-width: 100%;
-            width: 100%;
-            max-height: 100%;
-            overflow-y: auto;
+            max-width: 1100px;
+            margin: 0 auto;
             position: relative;
-            margin: auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-close {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: white;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
             border: none;
             width: 44px;
             height: 44px;
             border-radius: 50%;
             cursor: pointer;
             font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
             z-index: 1010;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            color: #000;
         }
 
         .modal-close:hover {
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(90deg);
+            background: white;
+        }
+
+        .modal-close:active {
+            transform: scale(1.05);
+        }
+
+        .modal-image-section {
+            background: #fafafa;
+            position: relative;
         }
 
         .modal-main-image {
             width: 100%;
-            max-height: 60vh;
+            max-height: 65vh;
             object-fit: contain;
             background: #fafafa;
+            padding: 30px;
         }
 
         .modal-gallery {
@@ -239,96 +282,129 @@
             gap: 10px;
             overflow-x: auto;
             padding: 20px;
-            background: #fafafa;
+            background: #f5f5f5;
             scrollbar-width: thin;
+            scrollbar-color: #ccc transparent;
         }
 
         .modal-gallery::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
+        }
+
+        .modal-gallery::-webkit-scrollbar-track {
+            background: transparent;
         }
 
         .modal-gallery::-webkit-scrollbar-thumb {
             background: #ccc;
-            border-radius: 4px;
+            border-radius: 3px;
+        }
+
+        .modal-gallery::-webkit-scrollbar-thumb:hover {
+            background: #999;
         }
 
         .modal-gallery img {
-            height: 90px;
-            min-width: 90px;
+            height: 100px;
+            min-width: 100px;
             cursor: pointer;
-            border-radius: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 12px;
+            transition: all 0.3s ease;
             object-fit: cover;
+            border: 2px solid transparent;
         }
 
         .modal-gallery img:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            border-color: #000;
+        }
+
+        .modal-gallery img.active {
+            border-color: #000;
         }
 
         .modal-info {
-            padding: 30px;
+            padding: 35px 30px;
+            background: white;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .modal-info h2 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
+            font-size: 2rem;
+            margin-bottom: 8px;
             line-height: 1.3;
+            color: #000;
+            font-weight: 700;
         }
 
         .modal-code {
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: #999;
-            margin-bottom: 25px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
         }
 
         .info-item {
-            padding: 12px 15px;
-            background: #f9f9f9;
-            border-radius: 10px;
+            padding: 16px 18px;
+            background: #fafafa;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: #f5f5f5;
+            border-color: #e0e0e0;
         }
 
         .info-item strong {
             display: block;
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.8rem;
+            color: #999;
             margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            font-weight: 600;
         }
 
         .info-item span {
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: #000;
+            font-weight: 500;
         }
 
         .no-products {
             text-align: center;
-            padding: 60px 20px;
-            color: #666;
-            font-size: 1.1rem;
+            padding: 80px 20px;
+            color: #999;
+            font-size: 1.05rem;
         }
 
         .loading {
             text-align: center;
-            padding: 60px 20px;
-            color: #666;
+            padding: 80px 20px;
+            color: #999;
         }
 
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #333;
+            border-top: 3px solid #000;
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
 
@@ -340,21 +416,22 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             .header {
-                padding: 12px 15px;
+                padding: 10px 12px;
             }
 
             .header-content {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 12px;
+                gap: 10px;
             }
 
             .logo {
-                height: 40px;
+                height: 28px;
             }
 
             .controls-wrapper {
                 max-width: 100%;
+                gap: 8px;
             }
 
             .search-row {
@@ -365,21 +442,24 @@
                 flex-direction: column;
             }
 
-            select {
+            .search-box, select {
+                width: 100%;
                 min-width: 100%;
+                padding: 12px 16px;
+                font-size: 16px; /* Évite le zoom sur iOS */
             }
 
             .container {
-                padding: 20px 12px;
+                padding: 15px 10px;
             }
 
             .product-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 12px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
 
             .product-image {
-                height: 220px;
+                height: 240px;
             }
 
             .product-info {
@@ -387,65 +467,88 @@
             }
 
             .product-name {
-                font-size: 0.95rem;
+                font-size: 0.9rem;
             }
 
             .product-code {
-                font-size: 0.8rem;
+                font-size: 0.75rem;
             }
 
             .product-tag {
-                font-size: 0.75rem;
-                padding: 4px 10px;
-            }
-
-            .modal-content {
-                border-radius: 0;
+                font-size: 0.7rem;
+                padding: 4px 9px;
             }
 
             .modal-close {
                 top: 12px;
                 right: 12px;
-                width: 38px;
-                height: 38px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.3rem;
             }
 
             .modal-main-image {
                 max-height: 50vh;
+                padding: 20px 15px;
             }
 
             .modal-gallery {
-                padding: 15px;
+                padding: 12px;
                 gap: 8px;
             }
 
             .modal-gallery img {
                 height: 70px;
                 min-width: 70px;
+                border-radius: 8px;
             }
 
             .modal-info {
-                padding: 20px 15px;
+                padding: 25px 15px;
+            }
+
+            .modal-header {
+                padding-bottom: 15px;
+                margin-bottom: 20px;
             }
 
             .modal-info h2 {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
+            }
+
+            .modal-code {
+                font-size: 0.95rem;
             }
 
             .info-grid {
                 grid-template-columns: 1fr;
                 gap: 12px;
             }
+
+            .info-item {
+                padding: 14px 16px;
+            }
+
+            .info-item strong {
+                font-size: 0.75rem;
+            }
+
+            .info-item span {
+                font-size: 0.95rem;
+            }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 380px) {
+            .logo {
+                height: 24px;
+            }
+
             .product-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 10px;
+                gap: 8px;
             }
 
             .product-image {
-                height: 180px;
+                height: 200px;
             }
 
             .product-info {
@@ -453,7 +556,27 @@
             }
 
             .product-name {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Version Desktop améliorée */
+        @media (min-width: 769px) {
+            .modal-content {
+                margin: 40px auto;
+                border-radius: 20px;
+                min-height: auto;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            }
+
+            .modal-main-image {
+                padding: 40px;
+            }
+
+            .modal-gallery img {
+                height: 110px;
+                min-width: 110px;
             }
         }
     </style>
@@ -499,10 +622,14 @@
 
     <div class="modal" id="productModal">
         <button class="modal-close" onclick="closeModal()">×</button>
-        <div class="modal-content">
-            <img class="modal-main-image" id="modalMainImage" src="" alt="">
-            <div class="modal-gallery" id="modalGallery"></div>
-            <div class="modal-info" id="modalInfo"></div>
+        <div class="modal-wrapper">
+            <div class="modal-content">
+                <div class="modal-image-section">
+                    <img class="modal-main-image" id="modalMainImage" src="" alt="">
+                    <div class="modal-gallery" id="modalGallery"></div>
+                </div>
+                <div class="modal-info" id="modalInfo"></div>
+            </div>
         </div>
     </div>
 
@@ -515,6 +642,7 @@
 
         let products = [];
         let filteredProducts = [];
+        let currentMainImage = null;
 
         function convertGoogleDriveUrl(url) {
             if (!url) return 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
@@ -636,6 +764,23 @@
             }).join('');
         }
 
+        function changeMainImage(src) {
+            const mainImage = document.getElementById('modalMainImage');
+            mainImage.style.opacity = '0';
+            setTimeout(() => {
+                mainImage.src = src;
+                mainImage.style.transition = 'opacity 0.3s ease';
+                mainImage.style.opacity = '1';
+            }, 150);
+
+            document.querySelectorAll('.modal-gallery img').forEach(img => {
+                img.classList.remove('active');
+                if (img.src === src) {
+                    img.classList.add('active');
+                }
+            });
+        }
+
         function showProduct(id) {
             const product = products.find(p => 
                 p.id === id || 
@@ -654,7 +799,9 @@
             const gallery = document.getElementById('modalGallery');
             const info = document.getElementById('modalInfo');
 
-            mainImage.src = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/1000x500/f5f5f5/666?text=No+Image';
+            currentMainImage = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/1000x500/f5f5f5/666?text=No+Image';
+            mainImage.src = currentMainImage;
+            mainImage.style.opacity = '1';
 
             const pics = [
                 product.pic_1 || product.Pic_1,
@@ -665,8 +812,12 @@
                 product.pic_6 || product.Pic_6
             ].filter(pic => pic && pic !== 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image');
             
-            gallery.innerHTML = pics.map(pic => 
-                `<img src="${pic}" onclick="document.getElementById('modalMainImage').src='${pic}'" loading="lazy" onerror="this.style.display='none'">`
+            gallery.innerHTML = pics.map((pic, index) => 
+                `<img src="${pic}" 
+                      onclick="changeMainImage('${pic}')" 
+                      class="${index === 0 ? 'active' : ''}"
+                      loading="lazy" 
+                      onerror="this.style.display='none'">`
             ).join('');
 
             const getName = (p) => p.name || p.Name || 'Produit sans nom';
@@ -682,8 +833,10 @@
             const getOcr = (p) => p.ocr || p.Ocr || p.OCR;
 
             info.innerHTML = `
-                <h2>${getName(product)}</h2>
-                <div class="modal-code">${getCode(product)}</div>
+                <div class="modal-header">
+                    <h2>${getName(product)}</h2>
+                    <div class="modal-code">${getCode(product)}</div>
+                </div>
                 
                 <div class="info-grid">
                     ${getGamme(product) ? `<div class="info-item"><strong>Gamme</strong><span>${getGamme(product)}</span></div>` : ''}
@@ -743,50 +896,4 @@
                     (product.Name && product.Name.toLowerCase().includes(search)) ||
                     (product.code && product.code.toLowerCase().includes(search)) ||
                     (product.Code && product.Code.toLowerCase().includes(search)) ||
-                    (product.color && product.color.toLowerCase().includes(search)) ||
-                    (product.Color && product.Color.toLowerCase().includes(search));
-                
-                const matchGamme = !gamme || (product.gamme === gamme || product.Gamme === gamme);
-                const matchSaison = !saison || (product.saison === saison || product.Saison === saison);
-                const matchType = !type || (product.type === type || product.Type === type);
-
-                return matchSearch && matchGamme && matchSaison && matchType;
-            });
-
-            displayProducts();
-        }
-
-        function applyURLFilters() {
-            const params = new URLSearchParams(window.location.search);
-            const gamme = params.get('gamme');
-            const id = params.get('id');
-            
-            if (gamme) {
-                document.getElementById('gammeFilter').value = gamme;
-                filterProducts();
-            }
-            
-            if (id) {
-                setTimeout(() => showProduct(id), 100);
-            }
-        }
-
-        document.getElementById('searchBox').addEventListener('input', filterProducts);
-        document.getElementById('gammeFilter').addEventListener('change', filterProducts);
-        document.getElementById('saisonFilter').addEventListener('change', filterProducts);
-        document.getElementById('typeFilter').addEventListener('change', filterProducts);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
-
-        document.getElementById('productModal').addEventListener('click', (e) => {
-            if (e.target.id === 'productModal') {
-                closeModal();
-            }
-        });
-
-        loadData();
-    </script>
-</body>
-</html>
+                    (product.color && product
