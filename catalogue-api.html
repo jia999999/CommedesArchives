@@ -20,7 +20,7 @@
         .header {
             background: white;
             border-bottom: 1px solid #e0e0e0;
-            padding: 20px;
+            padding: 15px 20px;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -34,107 +34,144 @@
             justify-content: space-between;
             align-items: center;
             gap: 20px;
-            flex-wrap: wrap;
         }
 
-        .back-btn {
-            text-decoration: none;
-            color: #000;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 20px;
-            transition: background 0.3s;
-        }
-
-        .back-btn:hover {
-            background: #f0f0f0;
-        }
-
-        .controls {
+        .logo-link {
             display: flex;
-            gap: 15px;
             align-items: center;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            transition: opacity 0.3s;
+        }
+
+        .logo:hover {
+            opacity: 0.7;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             flex: 1;
-            justify-content: flex-end;
+            max-width: 800px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
             flex-wrap: wrap;
         }
 
         .search-box {
-            padding: 10px 20px;
+            flex: 1;
+            padding: 12px 20px;
             border: 1px solid #ddd;
-            border-radius: 20px;
+            border-radius: 25px;
             font-size: 0.95rem;
-            min-width: 200px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            min-width: 0;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #000;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
         }
 
         select {
-            padding: 10px 15px;
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
-            border-radius: 20px;
+            border-radius: 25px;
             background: white;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #000;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 30px 15px;
         }
 
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
 
         .product-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
         }
 
         .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
         }
 
         .product-image {
             width: 100%;
-            height: 300px;
+            height: 320px;
             object-fit: cover;
             background: #f5f5f5;
         }
 
         .product-info {
-            padding: 20px;
+            padding: 18px;
         }
 
         .product-code {
             font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 5px;
+            color: #999;
+            margin-bottom: 6px;
+            font-weight: 500;
         }
 
         .product-name {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: #000;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .product-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .product-tag {
-            display: inline-block;
-            padding: 4px 10px;
+            padding: 5px 12px;
             background: #f0f0f0;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 0.8rem;
-            margin-right: 5px;
-            margin-top: 5px;
             color: #666;
+            white-space: nowrap;
         }
 
         .modal {
@@ -144,11 +181,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.92);
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 0;
+            overflow-y: auto;
         }
 
         .modal.active {
@@ -157,31 +195,41 @@
 
         .modal-content {
             background: white;
-            border-radius: 12px;
-            max-width: 1000px;
-            max-height: 90vh;
+            border-radius: 0;
+            max-width: 100%;
+            width: 100%;
+            max-height: 100%;
             overflow-y: auto;
             position: relative;
+            margin: auto;
         }
 
         .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
             background: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             cursor: pointer;
             font-size: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1010;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.1);
         }
 
         .modal-main-image {
             width: 100%;
-            max-height: 500px;
+            max-height: 60vh;
             object-fit: contain;
             background: #fafafa;
         }
@@ -192,17 +240,30 @@
             overflow-x: auto;
             padding: 20px;
             background: #fafafa;
+            scrollbar-width: thin;
+        }
+
+        .modal-gallery::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .modal-gallery::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
         }
 
         .modal-gallery img {
-            height: 80px;
+            height: 90px;
+            min-width: 90px;
             cursor: pointer;
-            border-radius: 6px;
-            transition: transform 0.2s;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            object-fit: cover;
         }
 
         .modal-gallery img:hover {
             transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .modal-info {
@@ -210,8 +271,15 @@
         }
 
         .modal-info h2 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .modal-code {
+            font-size: 1rem;
+            color: #999;
+            margin-bottom: 25px;
         }
 
         .info-grid {
@@ -222,23 +290,30 @@
         }
 
         .info-item {
-            padding: 10px;
+            padding: 12px 15px;
             background: #f9f9f9;
-            border-radius: 8px;
+            border-radius: 10px;
         }
 
         .info-item strong {
             display: block;
             font-size: 0.85rem;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item span {
+            font-size: 1rem;
+            color: #000;
         }
 
         .no-products {
             text-align: center;
             padding: 60px 20px;
             color: #666;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         .loading {
@@ -262,19 +337,123 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Responsive Design */
         @media (max-width: 768px) {
+            .header {
+                padding: 12px 15px;
+            }
+
             .header-content {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 12px;
             }
-            
-            .controls {
+
+            .logo {
+                height: 40px;
+            }
+
+            .controls-wrapper {
+                max-width: 100%;
+            }
+
+            .search-row {
                 flex-direction: column;
-                width: 100%;
             }
-            
-            .search-box, select {
-                width: 100%;
+
+            .filters-row {
+                flex-direction: column;
+            }
+
+            select {
+                min-width: 100%;
+            }
+
+            .container {
+                padding: 20px 12px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+
+            .product-image {
+                height: 220px;
+            }
+
+            .product-info {
+                padding: 12px;
+            }
+
+            .product-name {
+                font-size: 0.95rem;
+            }
+
+            .product-code {
+                font-size: 0.8rem;
+            }
+
+            .product-tag {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+            }
+
+            .modal-content {
+                border-radius: 0;
+            }
+
+            .modal-close {
+                top: 12px;
+                right: 12px;
+                width: 38px;
+                height: 38px;
+            }
+
+            .modal-main-image {
+                max-height: 50vh;
+            }
+
+            .modal-gallery {
+                padding: 15px;
+                gap: 8px;
+            }
+
+            .modal-gallery img {
+                height: 70px;
+                min-width: 70px;
+            }
+
+            .modal-info {
+                padding: 20px 15px;
+            }
+
+            .modal-info h2 {
+                font-size: 1.4rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 10px;
+            }
+
+            .product-image {
+                height: 180px;
+            }
+
+            .product-info {
+                padding: 10px;
+            }
+
+            .product-name {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -282,22 +461,27 @@
 <body>
     <div class="header">
         <div class="header-content">
-            <a href="index.html" class="back-btn">← Accueil</a>
+            <a href="index.html" class="logo-link">
+                <img src="COMMEdesARCHIVES_LOGO.png" alt="Comme des Archives" class="logo">
+            </a>
             
-            <div class="controls">
-                <input type="text" class="search-box" id="searchBox" placeholder="Rechercher...">
-                
-                <select id="gammeFilter">
-                    <option value="">Toutes les gammes</option>
-                </select>
-                
-                <select id="saisonFilter">
-                    <option value="">Toutes les saisons</option>
-                </select>
-                
-                <select id="typeFilter">
-                    <option value="">Tous les types</option>
-                </select>
+            <div class="controls-wrapper">
+                <div class="search-row">
+                    <input type="text" class="search-box" id="searchBox" placeholder="Rechercher...">
+                </div>
+                <div class="filters-row">
+                    <select id="gammeFilter">
+                        <option value="">Toutes les gammes</option>
+                    </select>
+                    
+                    <select id="saisonFilter">
+                        <option value="">Toutes les saisons</option>
+                    </select>
+                    
+                    <select id="typeFilter">
+                        <option value="">Tous les types</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
@@ -314,8 +498,8 @@
     </div>
 
     <div class="modal" id="productModal">
+        <button class="modal-close" onclick="closeModal()">×</button>
         <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
             <img class="modal-main-image" id="modalMainImage" src="" alt="">
             <div class="modal-gallery" id="modalGallery"></div>
             <div class="modal-info" id="modalInfo"></div>
@@ -420,10 +604,6 @@
             const grid = document.getElementById('productGrid');
             const noProducts = document.getElementById('noProducts');
             
-            if (filteredProducts.length === 0 && products.length > 0) {
-                filteredProducts = [...products];
-            }
-
             if (filteredProducts.length === 0) {
                 grid.innerHTML = '';
                 noProducts.style.display = 'block';
@@ -434,18 +614,19 @@
             grid.innerHTML = filteredProducts.map(product => {
                 const productId = product.id || product._RowNumber || product.code || Math.random().toString(36);
                 const imageUrl = product.pic_1 || product.Pic_1 || 'https://via.placeholder.com/250x300/f5f5f5/666?text=No+Image';
+                const name = product.name || product.Name || 'Produit sans nom';
                 
                 return `
                     <div class="product-card" onclick="showProduct('${productId}')">
                         <img class="product-image" 
                              src="${imageUrl}" 
-                             alt="${product.name || product.Name || product.code || 'Produit'}"
+                             alt="${name}"
                              onerror="this.src='https://via.placeholder.com/250x300/f5f5f5/666?text=Image+indisponible'"
                              loading="lazy">
                         <div class="product-info">
                             <div class="product-code">${product.code || product.Code || 'N/A'}</div>
-                            <div class="product-name">${product.name || product.Name || 'Produit sans nom'}</div>
-                            <div>
+                            <div class="product-name">${name}</div>
+                            <div class="product-tags">
                                 ${product.gamme || product.Gamme ? `<span class="product-tag">${product.gamme || product.Gamme}</span>` : ''}
                                 ${product.color || product.Color ? `<span class="product-tag">${product.color || product.Color}</span>` : ''}
                             </div>
@@ -502,26 +683,28 @@
 
             info.innerHTML = `
                 <h2>${getName(product)}</h2>
-                <div class="product-code" style="font-size: 1.1rem; margin-bottom: 20px;">${getCode(product)}</div>
+                <div class="modal-code">${getCode(product)}</div>
                 
                 <div class="info-grid">
-                    ${getGamme(product) ? `<div class="info-item"><strong>Gamme</strong>${getGamme(product)}</div>` : ''}
-                    ${getSaison(product) ? `<div class="info-item"><strong>Saison</strong>${getSaison(product)}</div>` : ''}
-                    ${getType(product) ? `<div class="info-item"><strong>Type</strong>${getType(product)}</div>` : ''}
-                    ${getNum(product) ? `<div class="info-item"><strong>Numéro</strong>${getNum(product)}</div>` : ''}
-                    ${getCollab(product) ? `<div class="info-item"><strong>Collaboration</strong>${getCollab(product)}</div>` : ''}
-                    ${getMaterial(product) ? `<div class="info-item"><strong>Matériau</strong>${getMaterial(product)}</div>` : ''}
-                    ${getColor(product) ? `<div class="info-item"><strong>Couleur</strong>${getColor(product)}</div>` : ''}
-                    ${getAd(product) ? `<div class="info-item"><strong>AD</strong>${getAd(product)}</div>` : ''}
-                    ${getOcr(product) ? `<div class="info-item"><strong>OCR</strong>${getOcr(product)}</div>` : ''}
+                    ${getGamme(product) ? `<div class="info-item"><strong>Gamme</strong><span>${getGamme(product)}</span></div>` : ''}
+                    ${getSaison(product) ? `<div class="info-item"><strong>Saison</strong><span>${getSaison(product)}</span></div>` : ''}
+                    ${getType(product) ? `<div class="info-item"><strong>Type</strong><span>${getType(product)}</span></div>` : ''}
+                    ${getNum(product) ? `<div class="info-item"><strong>Numéro</strong><span>${getNum(product)}</span></div>` : ''}
+                    ${getCollab(product) ? `<div class="info-item"><strong>Collaboration</strong><span>${getCollab(product)}</span></div>` : ''}
+                    ${getMaterial(product) ? `<div class="info-item"><strong>Matériau</strong><span>${getMaterial(product)}</span></div>` : ''}
+                    ${getColor(product) ? `<div class="info-item"><strong>Couleur</strong><span>${getColor(product)}</span></div>` : ''}
+                    ${getAd(product) ? `<div class="info-item"><strong>AD</strong><span>${getAd(product)}</span></div>` : ''}
+                    ${getOcr(product) ? `<div class="info-item"><strong>OCR</strong><span>${getOcr(product)}</span></div>` : ''}
                 </div>
             `;
 
             modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
             document.getElementById('productModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function populateFilters() {
@@ -597,7 +780,12 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // Chargement automatique au démarrage
+        document.getElementById('productModal').addEventListener('click', (e) => {
+            if (e.target.id === 'productModal') {
+                closeModal();
+            }
+        });
+
         loadData();
     </script>
 </body>
