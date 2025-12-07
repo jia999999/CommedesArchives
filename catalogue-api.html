@@ -896,4 +896,50 @@
                     (product.Name && product.Name.toLowerCase().includes(search)) ||
                     (product.code && product.code.toLowerCase().includes(search)) ||
                     (product.Code && product.Code.toLowerCase().includes(search)) ||
-                    (product.color && product
+                    (product.color && product.color.toLowerCase().includes(search)) ||
+                    (product.Color && product.Color.toLowerCase().includes(search));
+                
+                const matchGamme = !gamme || (product.gamme === gamme || product.Gamme === gamme);
+                const matchSaison = !saison || (product.saison === saison || product.Saison === saison);
+                const matchType = !type || (product.type === type || product.Type === type);
+
+                return matchSearch && matchGamme && matchSaison && matchType;
+            });
+
+            displayProducts();
+        }
+
+        function applyURLFilters() {
+            const params = new URLSearchParams(window.location.search);
+            const gamme = params.get('gamme');
+            const id = params.get('id');
+            
+            if (gamme) {
+                document.getElementById('gammeFilter').value = gamme;
+                filterProducts();
+            }
+            
+            if (id) {
+                setTimeout(() => showProduct(id), 100);
+            }
+        }
+
+        document.getElementById('searchBox').addEventListener('input', filterProducts);
+        document.getElementById('gammeFilter').addEventListener('change', filterProducts);
+        document.getElementById('saisonFilter').addEventListener('change', filterProducts);
+        document.getElementById('typeFilter').addEventListener('change', filterProducts);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        document.getElementById('productModal').addEventListener('click', (e) => {
+            if (e.target.id === 'productModal') {
+                closeModal();
+            }
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
